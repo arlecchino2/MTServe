@@ -1,0 +1,43 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
+
+# Distribution / packaging
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDE-related
+.idea/
+
+# Dev
+venv
+
+perfsim.cuda2ctl/
+
+# jerry
+cuTENSOR_debug/*
+uint_test/*
+log*
+a.out
+.vscode/*
+hopper/.hypothesis/*
+
+*.ncu-rep
+csrc/hstu_attn/src/generated/*
+!csrc/hstu_attn/src/generated/.gitkeep
+hopper/instantiations/*
+!hopper/instantiations/.gitkeep

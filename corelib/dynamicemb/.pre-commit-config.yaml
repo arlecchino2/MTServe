@@ -1,0 +1,28 @@
+repos:
+-   repo: https://github.com/PyCQA/autoflake
+    rev: v1.6.1
+    hooks:
+    -   id: autoflake
+        args: ['--in-place', '--remove-unused-variables'] # '--remove-all-unused-imports',
+        exclude: HierarchicalKV
+-   repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
+    hooks:
+    -   id: codespell
+        args:
+        - --skip=".git"
+        - --ignore-words-list=TE,TBE,tbe,dout,retrival
+        exclude: HierarchicalKV
+-   repo: https://github.com/psf/black
+    rev: 23.9.1
+    hooks:
+    -   id: black
+        exclude: HierarchicalKV
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.10.1
+    hooks:
+    -   id: mypy
+        entry: mypy dynamicemb
+        args: ["--ignore-missing-imports"]
+        pass_filenames: false
+        exclude: HierarchicalKV

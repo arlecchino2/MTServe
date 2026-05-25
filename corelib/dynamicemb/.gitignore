@@ -1,0 +1,10 @@
+.hypothesis
+.vscode
+debug*/
+build
+dist
+*.egg-info
+*.log
+*.so
+*.swp
+__pycache__/
