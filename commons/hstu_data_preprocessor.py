@@ -647,91 +647,45 @@ class DLRMKuaiRandProcessor(DataProcessor):
                 dtype=np.int64,
             )
 
-        # for idx, log_file in enumerate(self._log_files):
-        #     log.info(f"Processing {log_file}...")
-        #     log_df = pd.read_csv(
-        #         log_file,
-        #         delimiter=",",
-        #     )
-        #     df_grouped_by_user = (
-        #         log_df.groupby(["user_id", "date"]).agg(list).reset_index()
-        #     )
-
-        #     for event, weight in self._event_merge_weight.items():
-        #         df_grouped_by_user[event] = df_grouped_by_user[event].apply(
-        #             lambda seq: np.where(np.array(seq) == 0, 0, weight)
-        #         )
-
-        #     events = list(self._event_merge_weight.keys())
-        #     df_grouped_by_user["action_weights"] = df_grouped_by_user.apply(
-        #         lambda row: [int(sum(x)) for x in zip(*[row[col] for col in events])],
-        #         axis=1,
-        #     )
-        #     df_grouped_by_user = df_grouped_by_user[["user_id", "date"] + seq_cols]
-
-        #     df_sorted = df_grouped_by_user.apply(create_interval, axis=1)
-        #     df_filtered = df_sorted.groupby(level=0).apply(
-        #         lambda group: group.reset_index(drop=True)
-        #         .reindex(np.arange(np.int64(group.num_intervals)))
-        #         .fillna(method="ffill")
-        #     )
-
-        #     df_filtered["interval_counter"] = df_filtered.index.get_level_values(1) + 1
-        #     df_filtered = df_filtered.apply(filter_interval, axis=1)
-        #     df_filtered.reset_index()
-
-        #     if idx == 0:
-        #         sequence_df = df_sorted
-        #         batching_df = df_filtered
-        #     else:
-        #         sequence_df = pd.concat([sequence_df, df_sorted])
-        #         batching_df = pd.concat([batching_df, df_filtered])
-        
-        all_log_dfs = []
-
         for idx, log_file in enumerate(self._log_files):
             log.info(f"Processing {log_file}...")
             log_df = pd.read_csv(
                 log_file,
                 delimiter=",",
             )
-
-            # if idx == 1:
-            #     log_df = log_df[log_df['date'] >= 20220422]
-            
-            all_log_dfs.append(log_df)
-
-        df_combined = pd.concat(all_log_dfs, ignore_index=True)
-        df_combined["date"] = 20220408
-        df_grouped_by_user = (
-            df_combined.groupby(["user_id", "date"]).agg(list).reset_index()
-        )
-
-        for event, weight in self._event_merge_weight.items():
-            df_grouped_by_user[event] = df_grouped_by_user[event].apply(
-                lambda seq: np.where(np.array(seq) == 0, 0, weight)
+            df_grouped_by_user = (
+                log_df.groupby(["user_id", "date"]).agg(list).reset_index()
             )
 
-        events = list(self._event_merge_weight.keys())
-        df_grouped_by_user["action_weights"] = df_grouped_by_user.apply(
-            lambda row: [int(sum(x)) for x in zip(*[row[col] for col in events])],
-            axis=1,
-        )
-        df_grouped_by_user = df_grouped_by_user[["user_id", "date"] + seq_cols]
+            for event, weight in self._event_merge_weight.items():
+                df_grouped_by_user[event] = df_grouped_by_user[event].apply(
+                    lambda seq: np.where(np.array(seq) == 0, 0, weight)
+                )
 
-        df_sorted = df_grouped_by_user.apply(create_interval, axis=1)
-        df_filtered = df_sorted.groupby(level=0).apply(
-            lambda group: group.reset_index(drop=True)
-            .reindex(np.arange(np.int64(group.num_intervals)))
-            .fillna(method="ffill")
-        )
-        
-        df_filtered["interval_counter"] = df_filtered.index.get_level_values(1) + 1
-        df_filtered = df_filtered.apply(filter_interval, axis=1)
-        df_filtered.reset_index()
+            events = list(self._event_merge_weight.keys())
+            df_grouped_by_user["action_weights"] = df_grouped_by_user.apply(
+                lambda row: [int(sum(x)) for x in zip(*[row[col] for col in events])],
+                axis=1,
+            )
+            df_grouped_by_user = df_grouped_by_user[["user_id", "date"] + seq_cols]
 
-        sequence_df = df_sorted
-        batching_df = df_filtered
+            df_sorted = df_grouped_by_user.apply(create_interval, axis=1)
+            df_filtered = df_sorted.groupby(level=0).apply(
+                lambda group: group.reset_index(drop=True)
+                .reindex(np.arange(np.int64(group.num_intervals)))
+                .fillna(method="ffill")
+            )
+
+            df_filtered["interval_counter"] = df_filtered.index.get_level_values(1) + 1
+            df_filtered = df_filtered.apply(filter_interval, axis=1)
+            df_filtered.reset_index()
+
+            if idx == 0:
+                sequence_df = df_sorted
+                batching_df = df_filtered
+            else:
+                sequence_df = pd.concat([sequence_df, df_sorted])
+                batching_df = pd.concat([batching_df, df_filtered])
 
         log.info("Merging user features...")
         user_features_df = pd.read_csv(self._user_features_file, delimiter=",")
