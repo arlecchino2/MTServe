@@ -290,8 +290,6 @@ def run_ranking_gr_simulate(
         while True:
             try:
                 num_batches_ctr += 1
-                if num_batches_ctr == 3000:
-                    start_time = time.time()
                 uids, dates, seq_endptrs = next(dataloader_iter)
                 print(f"{num_batches_ctr}, uids: {uids.tolist()}")
                 if num_batches_ctr % 1000 == 0:
