@@ -347,7 +347,6 @@ class InferenceDenseModule(torch.nn.Module):
         user_ids: torch.Tensor,
         total_history_lengths: torch.Tensor,
         prepare_kvcache_result: List,
-        timing_info: Optional[Dict[str, float]] = None,
     ):
         with torch.inference_mode():
             (
@@ -360,23 +359,14 @@ class InferenceDenseModule(torch.nn.Module):
                 onload_fut,
             ) = prepare_kvcache_result
 
-            # 4. 预处理
-            if self.enable_timing_stats:
-                preprocess_start = time.time()
             jagged_data = self._hstu_block._preprocessor(
                 embeddings=embeddings,
                 batch=batch,
                 seq_start_position=old_cached_lengths.cuda(),
             )
-            if self.enable_timing_stats:
-                # torch.cuda.synchronize()
-                timing_info['preprocessing'] = time.time() - preprocess_start
 
             jagged_data.scaling_seqlen = self._scaling_seqlen
 
-            # 5. 等待KV Cache准备完成
-            if self.enable_timing_stats:
-                prepare_kvcache_wait_start = time.time()
             kvcache_metadata = self.async_kvcache.prepare_kvcache_wait(
                 onload_fut,
                 kvcache_metadata_fut,
@@ -389,32 +379,13 @@ class InferenceDenseModule(torch.nn.Module):
                 metadata_gpu_buffer,  # returned static
                 self.async_kvcache.static_onload_handle,
             )
-            if self.enable_timing_stats:
-                # torch.cuda.synchronize()
-                timing_info['prepare_kvcache_wait'] = time.time() - prepare_kvcache_wait_start
-
-            # 6. 下沉KV Cache
-            if self.enable_timing_stats:
-                offload_kvcache_start = time.time()
+            
             self.async_kvcache.offload_kvcache(kvcache_metadata)
-            if self.enable_timing_stats:
-                # torch.cuda.synchronize()
-                timing_info['offload_kvcache'] = time.time() - offload_kvcache_start
-
-            # 7. 更新KV Cache元数据
-            if self.enable_timing_stats:
-                update_metadata_start = time.time()
             kvcache_metadata.total_history_offsets += jagged_data.num_candidates_offsets
             kvcache_metadata.total_history_lengths += jagged_data.num_candidates
             kvcache_metadata.max_seqlen += jagged_data.max_num_candidates
             self.async_kvcache.sync_onload_buffer_to_cache(user_ids)
-            if self.enable_timing_stats:
-                # torch.cuda.synchronize()
-                timing_info['update_metadata'] = time.time() - update_metadata_start
 
-            # 8. HSTU推理
-            if self.enable_timing_stats:
-                hstu_start = time.time()
             num_tokens = batch.features.values().shape[0]
             if self.use_cudagraph:
                 self._hidden_states[:num_tokens, ...].copy_(
@@ -440,19 +411,10 @@ class InferenceDenseModule(torch.nn.Module):
                     kvcache_metadata,
                 )
                 jagged_data.values = hstu_output
-            if self.enable_timing_stats:
-                # torch.cuda.synchronize()
-                timing_info['hstu_inference'] = time.time() - hstu_start
 
-            # 9. 后处理和MLP
-            if self.enable_timing_stats:
-                postprocess_start = time.time()
             jagged_data = self._hstu_block._postprocessor(jagged_data)
             jagged_item_logit = self._mlp(jagged_data.values)
             self.async_kvcache.synchronize_sync_stream()
-            if self.enable_timing_stats:
-                # torch.cuda.synchronize()
-                timing_info['postprocess_and_mlp'] = time.time() - postprocess_start
 
         return jagged_item_logit
 

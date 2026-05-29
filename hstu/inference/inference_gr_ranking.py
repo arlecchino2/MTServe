@@ -297,15 +297,6 @@ def run_ranking_gr_simulate(
                 if num_batches_ctr % 1000 == 0:
                     logger.info(f"{num_batches_ctr}, uids: {uids.tolist()}, seq_endptrs: {seq_endptrs.tolist()}")
                 if dates[0] != cur_date:
-                    # if cur_date is not None:
-                    # eval_metric_dict = eval_module.compute()
-                    # print(
-                    #     f"[eval]:\n    "
-                    #     + stringify_dict(
-                    #         eval_metric_dict, prefix="Metrics", sep="\n    "
-                    #     )
-                    # )
-                    # model.clear_kv_cache()
                     if cur_date is not None:
                         break
                     cur_date = dates[0]
@@ -330,18 +321,9 @@ def run_ranking_gr_simulate(
                     else:
                         model.forward_nokvcache(batch)
                     # eval_module(logits, batch.labels)
-
-                if num_batches_ctr % 2000 == 0 and num_batches_ctr > 3000 and enable_timing_stats:
-                    model.print_cache_summary()
-                    model._print_timing_summary()
             except StopIteration:
                 break
         end_time = time.time()
-        print("Total #batch:", num_batches_ctr)
-        print("Total time(s):", end_time - start_time)
-        if enable_timing_stats:
-            model.print_cache_summary()
-            model._print_timing_summary()
 
 
 def run_ranking_gr_evaluate(
