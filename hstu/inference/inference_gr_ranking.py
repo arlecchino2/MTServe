@@ -291,9 +291,6 @@ def run_ranking_gr_simulate(
             try:
                 num_batches_ctr += 1
                 uids, dates, seq_endptrs = next(dataloader_iter)
-                print(f"{num_batches_ctr}, uids: {uids.tolist()}")
-                if num_batches_ctr % 1000 == 0:
-                    logger.info(f"{num_batches_ctr}, uids: {uids.tolist()}, seq_endptrs: {seq_endptrs.tolist()}")
                 if dates[0] != cur_date:
                     if cur_date is not None:
                         break
