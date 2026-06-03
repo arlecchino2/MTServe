@@ -1,5 +1,7 @@
 # MTServe: Efficient Serving for Generative Recommendation Models with Hierarchical Caches
 
+📄 **[Technical Report (PDF)](https://github.com/arlecchino2/MTServe/blob/main/TechnicalReport__MTServe.pdf)**
+
 ## Overview
 
 MTServe is a hierarchical cache management system for efficient serving of generative recommendation (GR) models. 
